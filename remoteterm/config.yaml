@@ -13,6 +13,10 @@ ingress_stream: true
 panel_icon: "mdi:human-greeting-proximity"
 panel_title: "RemoteTerm"
 bluetooth: true
+ports:
+  8000/tcp: 8000
+ports_description:
+  8000/tcp: "RemoteTerm Web UI (direct access)"
 map:
   - data:rw
 devices:
