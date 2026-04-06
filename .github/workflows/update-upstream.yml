@@ -1,0 +1,69 @@
+name: Check upstream and update version
+
+on:
+  schedule:
+    # Run daily at 06:00 UTC
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  check-and-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get latest upstream release tag
+        id: upstream
+        run: |
+          LATEST=$(curl -fsSL \
+            "https://api.github.com/repos/jkingsman/Remote-Terminal-for-MeshCore/releases/latest" \
+            | jq -r '.tag_name // empty')
+          # Strip leading 'v' if present
+          LATEST="${LATEST#v}"
+          echo "version=${LATEST}" >> "$GITHUB_OUTPUT"
+          echo "Upstream latest: ${LATEST}"
+
+      - name: Get current app version
+        id: current
+        run: |
+          CURRENT=$(grep '^version:' remoteterm/config.yaml | awk '{print $2}' | tr -d '"')
+          echo "version=${CURRENT}" >> "$GITHUB_OUTPUT"
+          echo "Current app version: ${CURRENT}"
+
+      - name: Update config.yaml and CHANGELOG if version changed
+        if: steps.upstream.outputs.version != '' && steps.upstream.outputs.version != steps.current.outputs.version
+        env:
+          NEW_VERSION: ${{ steps.upstream.outputs.version }}
+          OLD_VERSION: ${{ steps.current.outputs.version }}
+        run: |
+          # Update config.yaml version
+          sed -i "s/^version: .*/version: \"${NEW_VERSION}\"/" remoteterm/config.yaml
+
+          # Prepend a new entry to CHANGELOG.md
+          ENTRY="## ${NEW_VERSION}\n\n- Track upstream RemoteTerm for MeshCore ${NEW_VERSION}\n- See upstream [CHANGELOG](https://github.com/jkingsman/Remote-Terminal-for-MeshCore/blob/main/CHANGELOG.md) for details\n"
+          sed -i "1s/^/# Changelog\n\n${ENTRY}\n/" remoteterm/CHANGELOG.md
+          # Remove duplicate "# Changelog" header that sed may introduce
+          awk '!seen[$0]++ || !/^# Changelog/' remoteterm/CHANGELOG.md > /tmp/cl.md && mv /tmp/cl.md remoteterm/CHANGELOG.md
+
+      - name: Open pull request for version bump
+        if: steps.upstream.outputs.version != '' && steps.upstream.outputs.version != steps.current.outputs.version
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: "update/remoteterm-${{ steps.upstream.outputs.version }}"
+          commit-message: "chore: bump to upstream RemoteTerm ${{ steps.upstream.outputs.version }}"
+          title: "Update: RemoteTerm ${{ steps.upstream.outputs.version }}"
+          body: |
+            Upstream [RemoteTerm for MeshCore](https://github.com/jkingsman/Remote-Terminal-for-MeshCore) released **${{ steps.upstream.outputs.version }}**.
+
+            Changes:
+            - Updated `remoteterm/config.yaml` version from `${{ steps.current.outputs.version }}` to `${{ steps.upstream.outputs.version }}`
+            - Updated `remoteterm/CHANGELOG.md`
+
+            Please review the upstream [CHANGELOG](https://github.com/jkingsman/Remote-Terminal-for-MeshCore/blob/main/CHANGELOG.md) before merging.
+          labels: "upstream-update"

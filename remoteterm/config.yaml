@@ -1,0 +1,50 @@
+name: "RemoteTerm for MeshCore"
+version: "3.8.0"
+slug: "remoteterm"
+description: "Web-based terminal and management interface for MeshCore mesh radio networks"
+url: "https://github.com/bhaggs/ha-remoteterm-app"
+arch:
+  - amd64
+  - aarch64
+image: "ghcr.io/bhaggs/ha-remoteterm-app/remoteterm-app"
+ingress: true
+ingress_port: 8000
+ingress_stream: true
+panel_icon: "mdi:human-greeting-proximity"
+panel_title: "RemoteTerm"
+bluetooth: true
+map:
+  - data:rw
+devices:
+  - /dev/ttyUSB0
+  - /dev/ttyUSB1
+  - /dev/ttyACM0
+  - /dev/ttyACM1
+options:
+  serial_port: ""
+  serial_baudrate: 115200
+  tcp_host: ""
+  tcp_port: 5000
+  ble_address: ""
+  ble_pin: ""
+  log_level: "INFO"
+  disable_bots: false
+  basic_auth_username: ""
+  basic_auth_password: ""
+  enable_message_poll_fallback: false
+  force_channel_slot_reconfigure: false
+  skip_post_connect_sync: false
+schema:
+  serial_port: str?
+  serial_baudrate: int
+  tcp_host: str?
+  tcp_port: int
+  ble_address: str?
+  ble_pin: str?
+  log_level: list(DEBUG|INFO|WARNING|ERROR)
+  disable_bots: bool
+  basic_auth_username: str?
+  basic_auth_password: str?
+  enable_message_poll_fallback: bool
+  force_channel_slot_reconfigure: bool
+  skip_post_connect_sync: bool

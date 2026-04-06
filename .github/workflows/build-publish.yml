@@ -1,0 +1,61 @@
+name: Build and publish app image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - remoteterm/Dockerfile
+      - remoteterm/run.sh
+      - remoteterm/config.yaml
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/remoteterm-app
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read app version from config.yaml
+        id: version
+        run: |
+          VERSION=$(grep '^version:' remoteterm/config.yaml | awk '{print $2}' | tr -d '"')
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Building version ${VERSION}"
+
+      - name: Set up QEMU (for cross-platform builds)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push multi-platform image
+        uses: docker/build-push-action@v6
+        with:
+          context: remoteterm/
+          # Matches the two architectures the upstream image publishes.
+          # amd64  → Intel/AMD machines, VMs
+          # arm64  → Raspberry Pi 4/5, Odroid N2+, and RPi 3 running 64-bit HAOS
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          # Layer cache speeds up subsequent builds
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
