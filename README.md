@@ -1,7 +1,5 @@
 # ha-remoteterm-app
 
-> **⚠️ Known limitation:** The web UI must currently be accessed directly at `http://<your-ha-ip>:8000`. The sidebar ingress panel loads a blank page due to how the upstream frontend handles asset paths behind a sub-path proxy. A fix has been [proposed upstream](https://github.com/jkingsman/Remote-Terminal-for-MeshCore/issues/165) — once merged and released, the sidebar will work as expected.
-
 A Home Assistant app repository for [RemoteTerm for MeshCore](https://github.com/jkingsman/Remote-Terminal-for-MeshCore) — a web-based terminal and management interface for MeshCore mesh radio networks.
 
 ## Installation
