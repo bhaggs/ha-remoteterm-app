@@ -49,7 +49,7 @@ jobs:
 
           # Prepend a new entry to CHANGELOG.md
           ENTRY="## ${NEW_VERSION}\n\n- Track upstream RemoteTerm for MeshCore ${NEW_VERSION}\n- See upstream [CHANGELOG](https://github.com/jkingsman/Remote-Terminal-for-MeshCore/blob/main/CHANGELOG.md) for details\n"
-          sed -i "1s/^/# Changelog\n\n${ENTRY}\n/" remoteterm/CHANGELOG.md
+          sed -i "1s|^|# Changelog\n\n${ENTRY}\n|" remoteterm/CHANGELOG.md
           # Remove duplicate "# Changelog" header that sed may introduce
           awk '!seen[$0]++ || !/^# Changelog/' remoteterm/CHANGELOG.md > /tmp/cl.md && mv /tmp/cl.md remoteterm/CHANGELOG.md
 
