@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.11.0
+
+- Track upstream RemoteTerm for MeshCore 3.11.0
+- See upstream [CHANGELOG](https://github.com/jkingsman/Remote-Terminal-for-MeshCore/blob/main/CHANGELOG.md) for details
+
+
 ## 3.9.0
 
 - Track upstream RemoteTerm for MeshCore 3.9.0
