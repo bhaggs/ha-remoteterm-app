@@ -1,17 +1,20 @@
-name: "RemoteTerm for MeshCore"
-version: "3.9.0"
-slug: "remoteterm"
-description: "Web-based terminal and management interface for MeshCore mesh radio networks"
+name: "RemoteTerm for MeshCore (HA Test)"
+version: "3.9.0-ha-test"
+slug: "remoteterm-ha-test"
+description: "Test build of RemoteTerm with Home Assistant MQTT Discovery integration (upstream ha branch)"
 url: "https://github.com/bhaggs/ha-remoteterm-app"
 arch:
   - amd64
   - aarch64
-image: "ghcr.io/bhaggs/ha-remoteterm-app/remoteterm-app"
+image: "ghcr.io/bhaggs/ha-remoteterm-app/remoteterm-app:ha-test"
 ingress: true
 ingress_port: 8000
 ingress_stream: true
 panel_icon: "mdi:human-greeting-proximity"
-panel_title: "RemoteTerm"
+panel_title: "RemoteTerm HA Test"
+hassio_api: true
+services:
+  - mqtt:want
 bluetooth: true
 map:
   - data:rw
