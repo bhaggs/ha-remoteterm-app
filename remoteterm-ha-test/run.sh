@@ -85,7 +85,7 @@ APP_PID=$!
 # ---------------------------------------------------------------------------
 echo "Waiting for RemoteTerm to start..."
 for i in $(seq 1 60); do
-    if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
+    if curl -sf http://localhost:8000/api/health > /dev/null 2>&1; then
         echo "RemoteTerm is ready."
         break
     fi
@@ -97,12 +97,12 @@ done
 # Skipped if Mosquitto was not found or config already exists in the DB.
 # ---------------------------------------------------------------------------
 if [ -n "$MQTT_HOST" ]; then
-    EXISTS=$(curl -sf http://localhost:8000/fanout 2>/dev/null \
+    EXISTS=$(curl -sf http://localhost:8000/api/fanout 2>/dev/null \
         | jq '[.[] | select(.type == "mqtt_ha")] | length' 2>/dev/null || echo "0")
 
     if [ "${EXISTS}" -eq 0 ]; then
         echo "Configuring mqtt_ha fanout against ${MQTT_HOST}:${MQTT_PORT}..."
-        curl -sf -X POST http://localhost:8000/fanout \
+        curl -sf -X POST http://localhost:8000/api/fanout \
             -H "Content-Type: application/json" \
             -d "{
                 \"type\": \"mqtt_ha\",
