@@ -1,5 +1,5 @@
 name: "RemoteTerm for MeshCore (HA Test)"
-version: "3.9.0-ha-test"
+version: "3.9.1"
 slug: "remoteterm-ha-test"
 description: "Test build of RemoteTerm with Home Assistant MQTT Discovery integration (upstream ha branch)"
 url: "https://github.com/bhaggs/ha-remoteterm-app"
