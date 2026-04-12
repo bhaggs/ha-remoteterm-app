@@ -6,7 +6,7 @@ url: "https://github.com/bhaggs/ha-remoteterm-app"
 arch:
   - amd64
   - aarch64
-image: "ghcr.io/bhaggs/ha-remoteterm-app/remoteterm-app:ha-test"
+image: "ghcr.io/bhaggs/ha-remoteterm-app/remoteterm-app-ha-test"
 ingress: true
 ingress_port: 8000
 ingress_stream: true

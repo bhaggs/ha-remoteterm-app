@@ -11,7 +11,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/remoteterm-app
+  IMAGE_NAME: ${{ github.repository }}/remoteterm-app-ha-test
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -46,6 +46,8 @@ jobs:
           # (~15-20 min) due to cloning and full frontend build under QEMU.
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:ha-test
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:3.9.1
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
