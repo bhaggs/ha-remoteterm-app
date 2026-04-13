@@ -12,6 +12,9 @@ ingress_port: 8000
 ingress_stream: true
 panel_icon: "mdi:human-greeting-proximity"
 panel_title: "RemoteTerm"
+hassio_api: true
+services:
+  - mqtt:want
 bluetooth: true
 map:
   - data:rw

@@ -5,7 +5,7 @@ FROM docker.io/jkingsman/remoteterm-meshcore:${REMOTETERM_VERSION}
 
 # Install jq for parsing Home Assistant add-on options.json
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends jq \
+    && apt-get install -y --no-install-recommends jq curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY run.sh /run.sh
