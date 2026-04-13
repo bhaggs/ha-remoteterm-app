@@ -14,7 +14,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
-RUN git clone --branch ha --depth 1 \
+RUN git clone --branch main --depth 1 \
     https://github.com/jkingsman/Remote-Terminal-for-MeshCore.git .
 
 WORKDIR /build/frontend
