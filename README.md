@@ -23,6 +23,14 @@ RemoteTerm supports three ways to connect to a radio device. **TCP and serial ar
 | TCP | ✅ Yes | Set `tcp_host` and `tcp_port` to connect to a radio accessible over the network. No hardware passthrough needed. |
 | BLE | ⚠️ Best-effort | BLE in Docker is inherently fragile. The app requests host Bluetooth access, but depending on your hardware and host configuration it may not work reliably. TCP or serial are strongly preferred. |
 
+## Home Assistant MQTT integration
+
+If you have the [Mosquitto broker app](https://github.com/home-assistant/addons/tree/master/mosquitto) installed, RemoteTerm will automatically connect to it on first start and create mesh network devices and sensors in Home Assistant — no manual MQTT configuration needed. The app detects Mosquitto via the HA Supervisor and wires itself up automatically.
+
+For full details on the entities created and how to configure them, see the [upstream MQTT integration documentation](https://github.com/jkingsman/Remote-Terminal-for-MeshCore/blob/main/README_HA.md).
+
+If Mosquitto is not installed, RemoteTerm works as normal — MQTT is entirely optional.
+
 ## Architecture
 
 This app wraps the upstream `docker.io/jkingsman/remoteterm-meshcore` Docker image with a thin Home Assistant integration layer:
@@ -44,6 +52,7 @@ A [GitHub Actions workflow](.github/workflows/update-upstream.yml) checks for ne
 | App | Description |
 |-----|-------------|
 | [RemoteTerm for MeshCore](remoteterm/) | Web terminal for MeshCore mesh radio networks |
+| [RemoteTerm for MeshCore (Dev)](remoteterm-dev/) | Experimental build tracking upstream `main` — for testing only |
 
 ---
 
