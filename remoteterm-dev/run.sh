@@ -94,7 +94,8 @@ done
 
 # ---------------------------------------------------------------------------
 # Bootstrap the mqtt_ha fanout config on first run only.
-# Skipped if Mosquitto was not found or config already exists in the DB.
+# If a config already exists (including any manual changes made in the UI),
+# it is left completely untouched — user settings are always preserved.
 # ---------------------------------------------------------------------------
 if [ -n "$MQTT_HOST" ]; then
     EXISTS=$(curl -sf http://localhost:8000/api/fanout 2>/dev/null \

@@ -1,17 +1,17 @@
-name: Build and publish ha-test image
+name: Build and publish dev image
 
 on:
   push:
     branches: [main]
     paths:
-      - remoteterm-ha-test/Dockerfile
-      - remoteterm-ha-test/run.sh
-      - remoteterm-ha-test/config.yaml
+      - remoteterm-dev/Dockerfile
+      - remoteterm-dev/run.sh
+      - remoteterm-dev/config.yaml
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/remoteterm-app-ha-test
+  IMAGE_NAME: ${{ github.repository }}/remoteterm-app-dev
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -38,11 +38,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push ha-test image
+      - name: Build and push dev image
         uses: docker/build-push-action@v6
         with:
-          context: remoteterm-ha-test/
-          # Builds from upstream ha branch source — takes longer than normal
+          context: remoteterm-dev/
+          # Builds from upstream main — takes longer than normal
           # (~15-20 min) due to cloning and full frontend build under QEMU.
           platforms: linux/amd64,linux/arm64
           push: true
