@@ -1,5 +1,5 @@
 name: "RemoteTerm for MeshCore (Dev)"
-version: "2026.04.28.1"
+version: "2026.04.28"
 slug: "remoteterm-dev"
 description: "Development build tracking upstream main. Intended for testing only — not for regular use. May be unstable or broken at any time."
 url: "https://github.com/bhaggs/ha-remoteterm-app"
