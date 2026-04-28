@@ -18,6 +18,8 @@ RUN git clone --branch main --depth 1 \
     https://github.com/jkingsman/Remote-Terminal-for-MeshCore.git .
 
 WORKDIR /build/frontend
+# Apply local patch for iOS keyboard overlay fix (pending upstream acceptance)
+COPY MessageInput.tsx src/components/MessageInput.tsx
 RUN npm ci
 RUN npm run build
 
