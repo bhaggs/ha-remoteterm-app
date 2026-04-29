@@ -7,6 +7,7 @@ on:
       - remoteterm-dev/Dockerfile
       - remoteterm-dev/run.sh
       - remoteterm-dev/config.yaml
+      - remoteterm-dev/MessageInput.tsx
   workflow_dispatch:
 
 env:
@@ -27,8 +28,18 @@ jobs:
 
       - name: Generate date-based version
         id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION=$(date -u +"%Y.%m.%d")
+          BASE=$(date -u +"%Y.%m.%d")
+          EXISTING=$(gh api /users/bhaggs/packages/container/ha-remoteterm-app%2Fremoteterm-app-dev/versions \
+            --jq '[.[].metadata.container.tags[]] | join(" ")' 2>/dev/null || echo "")
+          COUNTER=0
+          VERSION="${BASE}.${COUNTER}"
+          while echo "$EXISTING" | grep -qw "$VERSION"; do
+            COUNTER=$((COUNTER + 1))
+            VERSION="${BASE}.${COUNTER}"
+          done
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Building dev version ${VERSION}"
 
