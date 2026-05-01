@@ -31,6 +31,12 @@ For full details on the entities created and how to configure them, see the [ups
 
 If Mosquitto is not installed, RemoteTerm works as normal — MQTT is entirely optional.
 
+## Bot file output and shared storage
+
+RemoteTerm bots can write files to `/share` inside the container, which maps to the Home Assistant shared volume (`/share` on the host). This volume is accessible to all HA add-ons, making it a convenient place to write log files or data that other add-ons or automations can read.
+
+For example, a bot script can write to `/share/remoteterm/my-bot.log` and the file will be visible in the HA file system.
+
 ## External access via reverse proxy
 
 By default, RemoteTerm is only accessible through the Home Assistant sidebar via ingress. If you want to expose it on your network or through your own reverse proxy (e.g. Nginx, Traefik, Cloudflare Tunnel), you can map port 8000 in the add-on's **Network** settings.

@@ -23,6 +23,7 @@ services:
 bluetooth: true
 map:
   - data:rw
+  - share:rw
 devices:
   - /dev/ttyUSB0
   - /dev/ttyUSB1
