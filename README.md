@@ -31,6 +31,16 @@ For full details on the entities created and how to configure them, see the [ups
 
 If Mosquitto is not installed, RemoteTerm works as normal — MQTT is entirely optional.
 
+## External access via reverse proxy
+
+By default, RemoteTerm is only accessible through the Home Assistant sidebar via ingress. If you want to expose it on your network or through your own reverse proxy (e.g. Nginx, Traefik, Cloudflare Tunnel), you can map port 8000 in the add-on's **Network** settings.
+
+In the add-on UI, go to the **Network** tab and set the host port for **8000/tcp** to any available port on your HA host (e.g. `8000`). RemoteTerm will then be reachable at `http://<ha-host>:<port>` in addition to the sidebar. Leave the field blank to keep it inaccessible from outside HA.
+
+Sidebar access via ingress continues to work regardless of whether a host port is set.
+
+> **Note:** Exposing the port bypasses HA authentication. If you use this option, enable RemoteTerm's built-in basic auth (via the `basic_auth_username` and `basic_auth_password` options) or protect the endpoint with your reverse proxy.
+
 ## Architecture
 
 This app wraps the upstream `docker.io/jkingsman/remoteterm-meshcore` Docker image with a thin Home Assistant integration layer:
