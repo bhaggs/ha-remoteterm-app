@@ -86,14 +86,38 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Build release notes
+        if: steps.tag_check.outputs.exists == 'false'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PREV_TAG=$(git tag --sort=-v:refname | head -1 2>/dev/null || echo "")
+
+          APP_COMMITS=""
+          if [ -n "$PREV_TAG" ]; then
+            APP_COMMITS=$(git log "${PREV_TAG}..HEAD" --oneline --no-merges \
+              -- remoteterm/ .github/ README.md repository.yaml \
+              | grep -v "chore: bump to upstream" \
+              | sed 's/^[a-f0-9]\+ /- /' \
+              2>/dev/null || echo "")
+          fi
+
+          {
+            echo "Tracks upstream [RemoteTerm for MeshCore v${VERSION}](https://github.com/jkingsman/Remote-Terminal-for-MeshCore/releases/tag/${VERSION})."
+            echo ""
+            echo "See the [upstream changelog](https://github.com/jkingsman/Remote-Terminal-for-MeshCore/blob/main/CHANGELOG.md) for details on what changed in this release."
+            if [ -n "$APP_COMMITS" ]; then
+              echo ""
+              echo "## Home Assistant App changes"
+              echo ""
+              echo "$APP_COMMITS"
+            fi
+          } > /tmp/release_notes.md
+
       - name: Create GitHub Release
         if: steps.tag_check.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: "v${{ steps.version.outputs.version }}"
           name: "v${{ steps.version.outputs.version }}"
-          body: |
-            Tracks upstream [RemoteTerm for MeshCore v${{ steps.version.outputs.version }}](https://github.com/jkingsman/Remote-Terminal-for-MeshCore/releases/tag/${{ steps.version.outputs.version }}).
-
-            See the [upstream changelog](https://github.com/jkingsman/Remote-Terminal-for-MeshCore/blob/main/CHANGELOG.md) for details on what changed in this release.
+          body_path: /tmp/release_notes.md
           generate_release_notes: false
