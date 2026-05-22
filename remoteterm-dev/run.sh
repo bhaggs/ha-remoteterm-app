@@ -126,6 +126,10 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Hand off to the app process
+# Hand off to the app process.
+# Forward SIGTERM/SIGINT to uvicorn so it can close the serial port cleanly
+# before Docker kills the container. Without this, bash (PID 1) swallows the
+# signal and Docker falls back to SIGKILL, leaving the serial device held.
 # ---------------------------------------------------------------------------
+trap 'kill -TERM $APP_PID; wait $APP_PID' TERM INT
 wait $APP_PID
