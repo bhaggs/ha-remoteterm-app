@@ -77,8 +77,17 @@ fi
 # Start the application in the background so we can bootstrap MQTT config
 # ---------------------------------------------------------------------------
 cd /app
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+# --no-sync: run the environment exactly as built into the image. Without it,
+# `uv run` re-syncs on every start and downloads upstream's dev-only tools
+# (ruff, pyright, pytest, ...), which slows start-up and needs internet access.
+uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port 8000 &
 APP_PID=$!
+
+# Forward SIGTERM/SIGINT to uvicorn so it can close the serial port cleanly
+# before Docker kills the container. Without this, bash (PID 1) swallows the
+# signal and Docker falls back to SIGKILL, leaving the serial device held.
+# Installed straight away so a stop during start-up is forwarded too.
+trap 'kill -TERM "$APP_PID" 2>/dev/null || true' TERM INT
 
 # ---------------------------------------------------------------------------
 # Wait for RemoteTerm to be ready (up to 60 seconds)
@@ -89,6 +98,8 @@ for i in $(seq 1 60); do
         echo "RemoteTerm is ready."
         break
     fi
+    # Stop waiting if the app has already exited (crashed, or stopped by HA).
+    kill -0 "$APP_PID" 2>/dev/null || break
     sleep 1
 done
 
@@ -97,7 +108,9 @@ done
 # If a config already exists (including any manual changes made in the UI),
 # it is left completely untouched — user settings are always preserved.
 # ---------------------------------------------------------------------------
-if [ -n "$MQTT_HOST" ]; then
+if ! kill -0 "$APP_PID" 2>/dev/null; then
+    echo "RemoteTerm is not running, skipping MQTT bootstrap."
+elif [ -n "$MQTT_HOST" ]; then
     EXISTS=$(curl -sf http://localhost:8000/api/fanout 2>/dev/null \
         | jq '[.[] | select(.type == "mqtt_ha")] | length' 2>/dev/null || echo "0")
 
@@ -126,10 +139,15 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Hand off to the app process.
-# Forward SIGTERM/SIGINT to uvicorn so it can close the serial port cleanly
-# before Docker kills the container. Without this, bash (PID 1) swallows the
-# signal and Docker falls back to SIGKILL, leaving the serial device held.
+# Hand off to the app process and exit with its status.
+# When a trapped signal arrives, `wait` returns immediately with 128+N (143
+# for SIGTERM) while the app is still shutting down. Exiting with that status
+# made HA report the app as "error" after every normal stop, so keep waiting
+# until the app has really exited and pass its own exit code to Docker.
 # ---------------------------------------------------------------------------
-trap 'kill -TERM $APP_PID; wait $APP_PID' TERM INT
-wait $APP_PID
+EXIT_CODE=0
+while true; do
+    wait "$APP_PID" && EXIT_CODE=0 || EXIT_CODE=$?
+    kill -0 "$APP_PID" 2>/dev/null || break
+done
+exit "$EXIT_CODE"
