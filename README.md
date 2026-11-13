@@ -1,6 +1,8 @@
 # ha-remoteterm-app
 
-A Home Assistant app repository for [RemoteTerm for MeshCore](https://github.com/jkingsman/Remote-Terminal-for-MeshCore) — a web-based terminal and management interface for MeshCore mesh radio networks.
+A Home Assistant app repository for [RemoteTerm for MeshCore](https://github.com/statico/remoteterm-meshcore) — a web-based terminal and management interface for MeshCore mesh radio networks.
+
+> **Upstream source:** Development of the original [jkingsman/Remote-Terminal-for-MeshCore](https://github.com/jkingsman/Remote-Terminal-for-MeshCore) project is paused. Starting with app version 3.26.8, this app packages the [statico/remoteterm-meshcore](https://github.com/statico/remoteterm-meshcore) fork, which continues from the original's 3.17.1 release. Updating from 3.17.1 upgrades the RemoteTerm database, and the upgrade can't be undone, so back up the app before updating if you might want to roll back. See the [changelog](remoteterm/CHANGELOG.md).
 
 ## Installation
 
@@ -27,7 +29,7 @@ RemoteTerm supports three ways to connect to a radio device. **TCP and serial ar
 
 If you have the [Mosquitto broker app](https://github.com/home-assistant/addons/tree/master/mosquitto) installed, RemoteTerm will automatically connect to it on first start and create mesh network devices and sensors in Home Assistant — no manual MQTT configuration needed. The app detects Mosquitto via the HA Supervisor and wires itself up automatically.
 
-For full details on the entities created and how to configure them, see the [upstream MQTT integration documentation](https://github.com/jkingsman/Remote-Terminal-for-MeshCore/blob/main/README_HA.md).
+For full details on the entities created and how to configure them, see the [upstream MQTT integration documentation](https://github.com/statico/remoteterm-meshcore/blob/main/README_HA.md).
 
 If Mosquitto is not installed, RemoteTerm works as normal — MQTT is entirely optional.
 
@@ -49,26 +51,32 @@ Sidebar access via ingress continues to work regardless of whether a host port i
 
 ## Architecture
 
-This app wraps the upstream `docker.io/jkingsman/remoteterm-meshcore` Docker image with a thin Home Assistant integration layer:
+This app wraps the upstream `ghcr.io/statico/remoteterm-meshcore` Docker image with a thin Home Assistant integration layer:
 
-- The [Dockerfile](remoteterm/Dockerfile) uses the upstream image as its base — updating the upstream image automatically provides new features and fixes.
+- The [Dockerfile](remoteterm/Dockerfile) uses the upstream image as its base. Each app release is built on the upstream image tag that matches its version.
 - The [run.sh](remoteterm/run.sh) translates Home Assistant app options into `MESHCORE_*` environment variables consumed by the app.
 - The SQLite database is stored in the app's persistent `/data` volume so it survives restarts and updates.
 
 ## Issues and feature requests
 
-This repository only maintains the Home Assistant app packaging. For bugs or feature requests related to RemoteTerm itself — the UI, radio connectivity, messaging, bots, etc. — please open an issue in the [upstream repository](https://github.com/jkingsman/Remote-Terminal-for-MeshCore/issues). Issues specific to the HA app wrapper (installation, sidebar access, options not applying, etc.) can be filed here.
+This repository only maintains the Home Assistant app packaging. For bugs or feature requests related to RemoteTerm itself — the UI, radio connectivity, messaging, bots, etc. — please open an issue in the [upstream repository](https://github.com/statico/remoteterm-meshcore/issues). Issues specific to the HA app wrapper (installation, sidebar access, options not applying, etc.) can be filed here.
 
 ## Keeping up with upstream
 
 A [GitHub Actions workflow](.github/workflows/update-upstream.yml) checks for new RemoteTerm upstream releases daily and opens a pull request when one is found. Merging the PR bumps the app version — no manual tracking required.
+
+## Versioning and releases
+
+The app version matches the upstream RemoteTerm release it packages (e.g. `3.26.8`). Fixes to the app itself that ship between upstream releases get a fourth number (`3.26.8.1`, `3.26.8.2`, …), which resets at the next upstream release. The Dev app uses date-based versions (`2026.11.12.0`) set automatically on each build.
+
+The app's [CHANGELOG](remoteterm/CHANGELOG.md) follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and each GitHub release's notes are taken from it. For the full release process, see the [release skill](.claude/skills/release/SKILL.md).
 
 ## Apps in this repository
 
 | App | Description |
 |-----|-------------|
 | [RemoteTerm for MeshCore](remoteterm/) | Web terminal for MeshCore mesh radio networks |
-| [RemoteTerm for MeshCore (Dev)](remoteterm-dev/) | Experimental build tracking upstream `main` — for testing only |
+| [RemoteTerm for MeshCore (Dev)](remoteterm-dev/) | Experimental build on upstream's `edge` image (latest `main`) — for testing only |
 
 ---
 

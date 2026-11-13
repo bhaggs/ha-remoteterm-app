@@ -1,6 +1,6 @@
 # RemoteTerm for MeshCore
 
-A Home Assistant app that runs [RemoteTerm for MeshCore](https://github.com/jkingsman/Remote-Terminal-for-MeshCore) — a web-based terminal and management interface for MeshCore mesh radio networks.
+A Home Assistant app that runs [RemoteTerm for MeshCore](https://github.com/statico/remoteterm-meshcore) — a web-based terminal and management interface for MeshCore mesh radio networks.
 
 Once started, RemoteTerm appears in the Home Assistant sidebar for one-click access. All traffic is routed through HA's ingress proxy — no port is exposed externally.
 
@@ -57,4 +57,10 @@ The SQLite database is stored at `/data/meshcore.db` inside the app's persistent
 
 ## Updating
 
-This app tracks upstream RemoteTerm releases. When a new version is published, update from the **Settings → Apps** page. The `config.yaml` version number corresponds to the upstream RemoteTerm release.
+This app tracks upstream RemoteTerm releases. When a new version is published, update from the **Settings → Apps** page. The app version number matches the upstream RemoteTerm release it packages. A fourth number (e.g. `3.26.8.1`) means an update to this app only, on the same upstream release.
+
+Upstream releases may include database migrations, which run automatically on first start and can't be undone. If you might want to roll back to an older version, take a backup of this app first (**Settings → System → Backups**) and restore it to roll back.
+
+### Upstream source
+
+Development of the original [jkingsman/Remote-Terminal-for-MeshCore](https://github.com/jkingsman/Remote-Terminal-for-MeshCore) project is paused. Starting with app version 3.26.8, this app packages the [statico/remoteterm-meshcore](https://github.com/statico/remoteterm-meshcore) fork, which continues from the original's 3.17.1 release. Your options, radio settings and message history carry over unchanged.

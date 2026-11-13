@@ -1,7 +1,11 @@
-# Upstream RemoteTerm image tag to track.
-# Update REMOTETERM_VERSION here (and in config.yaml) when the upstream releases a new version.
+# Upstream RemoteTerm image tag to build on. The build workflow passes the
+# version from config.yaml so each app release pins the matching upstream
+# release; the `latest` default only applies to local builds.
+#
+# Upstream: https://github.com/statico/remoteterm-meshcore (a continuation of
+# the paused jkingsman/Remote-Terminal-for-MeshCore project).
 ARG REMOTETERM_VERSION=latest
-FROM docker.io/jkingsman/remoteterm-meshcore:${REMOTETERM_VERSION}
+FROM ghcr.io/statico/remoteterm-meshcore:${REMOTETERM_VERSION}
 
 # Install jq for parsing Home Assistant add-on options.json
 RUN apt-get update \

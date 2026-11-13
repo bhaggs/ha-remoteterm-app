@@ -12,8 +12,9 @@
 *.sln
 *.sw?
 
-# Claude Code
-.claude/
+# Claude Code (local settings stay private; project skills are shared)
+.claude/*
+!.claude/skills/
 
 # Local environment files
 .env
