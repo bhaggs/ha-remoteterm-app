@@ -2,7 +2,7 @@
 
 A Home Assistant app repository for [RemoteTerm for MeshCore](https://github.com/statico/remoteterm-meshcore) — a web-based terminal and management interface for MeshCore mesh radio networks.
 
-> **Upstream source:** Development of the original [jkingsman/Remote-Terminal-for-MeshCore](https://github.com/jkingsman/Remote-Terminal-for-MeshCore) project is paused. Starting with app version 3.26.8, this app packages the [statico/remoteterm-meshcore](https://github.com/statico/remoteterm-meshcore) fork, which continues from the original's 3.17.1 release. Updating from 3.17.1 upgrades the RemoteTerm database, and the upgrade can't be undone, so back up the app before updating if you might want to roll back. See the [changelog](CHANGELOG.md).
+> **Upstream source:** Development of the original [jkingsman/Remote-Terminal-for-MeshCore](https://github.com/jkingsman/Remote-Terminal-for-MeshCore) project is paused. Starting with app version 3.26.8, this app packages the [statico/remoteterm-meshcore](https://github.com/statico/remoteterm-meshcore) fork, which continues from the original's 3.17.1 release. Updating from 3.17.1 upgrades the RemoteTerm database, and the upgrade can't be undone, so back up the app before updating if you might want to roll back. See the [changelog](remoteterm/CHANGELOG.md).
 
 ## Installation
 
@@ -69,7 +69,7 @@ A [GitHub Actions workflow](.github/workflows/update-upstream.yml) checks for ne
 
 The app version matches the upstream RemoteTerm release it packages (e.g. `3.26.8`). Fixes to the app itself that ship between upstream releases get a fourth number (`3.26.8.1`, `3.26.8.2`, …), which resets at the next upstream release. The Dev app uses date-based versions (`2026.11.12.0`) set automatically on each build.
 
-The app's [CHANGELOG](CHANGELOG.md) is the source for each GitHub release's notes. `remoteterm/CHANGELOG.md`, which Home Assistant shows in its update dialog, is generated from it. For the full release process, see the [release skill](.claude/skills/release/SKILL.md).
+The app's [CHANGELOG](remoteterm/CHANGELOG.md) is what Home Assistant shows in its update dialog, and each GitHub release's notes are taken from it. For the full release process, see the [release skill](.claude/skills/release/SKILL.md).
 
 ## Apps in this repository
 
