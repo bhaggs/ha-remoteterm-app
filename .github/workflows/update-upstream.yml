@@ -54,13 +54,12 @@ jobs:
           # Update config.yaml version
           sed -i "s/^version: .*/version: \"${NEW_VERSION}\"/" remoteterm/config.yaml
 
-          # Release [Unreleased] as the new version in the Keep a Changelog file
+          # Add the new version to the changelog, including any Unreleased entries
           python3 .github/scripts/bump_changelog.py \
             remoteterm/CHANGELOG.md \
             "${NEW_VERSION}" \
             "$(TZ=America/Los_Angeles date +%Y-%m-%d)" \
-            --upstream "https://github.com/${UPSTREAM_REPO}" \
-            --app-repo "https://github.com/${{ github.repository }}"
+            --upstream "https://github.com/${UPSTREAM_REPO}"
 
       - name: Open pull request for version bump
         if: steps.upstream.outputs.version != '' && steps.upstream.outputs.version != steps.current.outputs.upstream
@@ -75,7 +74,7 @@ jobs:
 
             Changes:
             - Updated `remoteterm/config.yaml` version from `${{ steps.current.outputs.version }}` to `${{ steps.upstream.outputs.version }}`
-            - Released the `[Unreleased]` section of `remoteterm/CHANGELOG.md` as `${{ steps.upstream.outputs.version }}`
+            - Added a `${{ steps.upstream.outputs.version }}` section to `remoteterm/CHANGELOG.md`, including any `Unreleased` entries
 
             Please review the upstream [CHANGELOG](https://github.com/${{ env.UPSTREAM_REPO }}/blob/main/CHANGELOG.md) before merging.
           labels: "upstream-update"

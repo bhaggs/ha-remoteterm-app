@@ -58,8 +58,8 @@ jobs:
       - name: Require a CHANGELOG section for a new version
         if: steps.version.outputs.released == 'false'
         run: |
-          if ! grep -qF "## [${{ steps.version.outputs.version }}]" remoteterm/CHANGELOG.md; then
-            echo "::error::remoteterm/CHANGELOG.md has no '## [${{ steps.version.outputs.version }}]' section"
+          if ! grep -qxF "## ${{ steps.version.outputs.version }}" remoteterm/CHANGELOG.md; then
+            echo "::error::remoteterm/CHANGELOG.md has no '## ${{ steps.version.outputs.version }}' section"
             exit 1
           fi
 
@@ -129,17 +129,18 @@ jobs:
         run: |
           VERSION="${{ needs.prepare.outputs.version }}"
           UPSTREAM="${{ needs.prepare.outputs.upstream }}"
-          # Body of this version's section in the Keep a Changelog file:
-          # everything between "## [VERSION]" and the next "## [" heading.
+          # Body of this version's section: everything between "## VERSION"
+          # and the next "## " heading, minus the "_Released DATE_" line
+          # (the GitHub release has its own date).
           NOTES=$(awk -v v="$VERSION" '
-            index($0, "## [" v "]") == 1 { found = 1; next }
-            found && /^## \[/ { exit }
-            found && /^\[[^]]+\]: / { exit }
+            $0 == "## " v { found = 1; next }
+            found && /^## / { exit }
+            found && /^_Released [0-9-]+_$/ { next }
             found { print }
           ' remoteterm/CHANGELOG.md | sed -e '/./,$!d')
 
           if [ -z "$NOTES" ]; then
-            echo "::error::No '## [${VERSION}]' section found in remoteterm/CHANGELOG.md"
+            echo "::error::No '## ${VERSION}' section found in remoteterm/CHANGELOG.md"
             exit 1
           fi
 

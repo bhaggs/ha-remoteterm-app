@@ -69,7 +69,7 @@ A [GitHub Actions workflow](.github/workflows/update-upstream.yml) checks for ne
 
 The app version matches the upstream RemoteTerm release it packages (e.g. `3.26.8`). Fixes to the app itself that ship between upstream releases get a fourth number (`3.26.8.1`, `3.26.8.2`, …), which resets at the next upstream release. The Dev app uses date-based versions (`2026.11.12.0`) set automatically on each build.
 
-The app's [CHANGELOG](remoteterm/CHANGELOG.md) follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/), and each GitHub release's notes are taken from it. For the full release process, see the [release skill](.claude/skills/release/SKILL.md).
+The app's [CHANGELOG](remoteterm/CHANGELOG.md) is what Home Assistant shows in its update dialog, and each GitHub release's notes are taken from it. For the full release process, see the [release skill](.claude/skills/release/SKILL.md).
 
 ## Apps in this repository
 
