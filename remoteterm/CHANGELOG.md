@@ -26,7 +26,7 @@ For changes to RemoteTerm itself, follow the upstream release linked in each ent
 
 - Release images are now built from the upstream image tag matching the app version. Previously every build used the upstream `latest` image, so an app version could contain a different upstream release than its number suggested.
 - Pushing changes to the app no longer silently rebuilds an already-released version's image. Previously, existing installs never received those changes and new installs got a different image under the same version number.
-- Stopping the app no longer shows it as "error" in Home Assistant. The app shut down cleanly, but the start-up script exited with code 143 instead of the app's own exit code.
+- Stopping the app no longer shows it as "error" in Home Assistant. RemoteTerm shut down cleanly, but its web server deliberately ends with the stop signal's exit code (143), and the start-up script passed that on to Home Assistant as a failure. A real crash is still reported as an error.
 - The app no longer downloads upstream's development tools (about 17 MB) on every start, so it starts faster and doesn't need internet access to start.
 - Stopping the app during its first minute now shuts RemoteTerm down cleanly too, and a crash during start-up is reported immediately instead of after 60 seconds.
 - On iPhone, the empty band between the Home Assistant header and the RemoteTerm header is gone. RemoteTerm's padding for the iPhone status bar was also applied inside Home Assistant, which already accounts for it. Opening RemoteTerm directly or as an installed web app is unchanged.

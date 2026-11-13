@@ -87,7 +87,8 @@ APP_PID=$!
 # before Docker kills the container. Without this, bash (PID 1) swallows the
 # signal and Docker falls back to SIGKILL, leaving the serial device held.
 # Installed straight away so a stop during start-up is forwarded too.
-trap 'kill -TERM "$APP_PID" 2>/dev/null || true' TERM INT
+STOP_REQUESTED=0
+trap 'STOP_REQUESTED=1; kill -TERM "$APP_PID" 2>/dev/null || true' TERM INT
 
 # ---------------------------------------------------------------------------
 # Wait for RemoteTerm to be ready (up to 60 seconds)
@@ -140,14 +141,21 @@ fi
 
 # ---------------------------------------------------------------------------
 # Hand off to the app process and exit with its status.
-# When a trapped signal arrives, `wait` returns immediately with 128+N (143
-# for SIGTERM) while the app is still shutting down. Exiting with that status
-# made HA report the app as "error" after every normal stop, so keep waiting
-# until the app has really exited and pass its own exit code to Docker.
+# When a trapped signal arrives, `wait` returns immediately with 128+N while
+# the app is still shutting down, so keep waiting until it has really exited.
 # ---------------------------------------------------------------------------
 EXIT_CODE=0
 while true; do
     wait "$APP_PID" && EXIT_CODE=0 || EXIT_CODE=$?
     kill -0 "$APP_PID" 2>/dev/null || break
 done
+
+# After a graceful shutdown, uvicorn re-raises the signal it received so the
+# process ends "killed by SIGTERM" (exit 143), or 130 for SIGINT. When we
+# forwarded a stop from HA, that is a normal stop: exit 0 so HA shows the app
+# as stopped rather than "error". Any other status (a crash) is passed on.
+if [ "$STOP_REQUESTED" -eq 1 ] && { [ "$EXIT_CODE" -eq 143 ] || [ "$EXIT_CODE" -eq 130 ]; }; then
+    echo "RemoteTerm stopped."
+    EXIT_CODE=0
+fi
 exit "$EXIT_CODE"
