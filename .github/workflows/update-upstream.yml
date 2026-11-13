@@ -54,7 +54,8 @@ jobs:
           # Update config.yaml version
           sed -i "s/^version: .*/version: \"${NEW_VERSION}\"/" remoteterm/config.yaml
 
-          # Release [Unreleased] as the new version in the Keep a Changelog file
+          # Release any [Unreleased] entries as the new version in CHANGELOG.md,
+          # and regenerate the Home Assistant copy
           python3 .github/scripts/bump_changelog.py \
             CHANGELOG.md \
             "${NEW_VERSION}" \
@@ -76,7 +77,7 @@ jobs:
 
             Changes:
             - Updated `remoteterm/config.yaml` version from `${{ steps.current.outputs.version }}` to `${{ steps.upstream.outputs.version }}`
-            - Released the `[Unreleased]` section of `CHANGELOG.md` as `${{ steps.upstream.outputs.version }}` and regenerated `remoteterm/CHANGELOG.md`
+            - Added a `${{ steps.upstream.outputs.version }}` section to `CHANGELOG.md`, including any `[Unreleased]` entries, and regenerated `remoteterm/CHANGELOG.md`
 
             Please review the upstream [CHANGELOG](https://github.com/${{ env.UPSTREAM_REPO }}/blob/main/CHANGELOG.md) before merging.
           labels: "upstream-update"

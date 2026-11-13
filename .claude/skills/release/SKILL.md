@@ -49,6 +49,7 @@ HA quirk: HA shows everything from the new version's heading down to the first h
 
 Rules for the root file:
 
+- `## [Unreleased]` exists only while there are committed changes waiting for a release. Leave it out when nothing is pending, and add it above the newest version when you record the first change after a release. The bump script removes it again when it releases those changes.
 - Every change to the app itself goes under `## [Unreleased]` **in the same PR as the change**, grouped under `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed` or `### Security`.
 - Write entries for HA users rather than developers: say what changes for them, not which file changed. Call out anything that needs action or can't be undone, such as database migrations, in **bold**.
 - Changes to upstream RemoteTerm itself are not listed. Each version's "Track upstream …" line links to the upstream release.
@@ -74,7 +75,7 @@ To fix release notes, edit the changelog *before* the version merges, or edit th
 1. `update-upstream.yml` runs daily at 06:00 UTC, or can be started by hand. It compares the latest upstream release with the first three parts of `remoteterm/config.yaml`'s version.
 2. If upstream is newer, it opens an `update/remoteterm-<version>` PR that:
    - sets `version:` to the upstream version, dropping any `.N` revision;
-   - runs `bump_changelog.py --upstream … --ha-changelog remoteterm/CHANGELOG.md`, which moves `[Unreleased]` into the new version's section, puts the "Track upstream" line first under `### Changed`, updates the links and regenerates the HA copy.
+   - runs `bump_changelog.py --upstream … --ha-changelog remoteterm/CHANGELOG.md`, which moves any `[Unreleased]` entries into the new version's section, puts the "Track upstream" line first under `### Changed`, updates the links and regenerates the HA copy.
 3. Before merging, read the upstream release notes. Look for:
    - new `MESHCORE_*` settings worth exposing as app options (`config.yaml` `options`/`schema`, `run.sh`, `DOCS.md`);
    - changes to the `/api/health`, `/api/fanout` or `mqtt_ha` behaviour that `run.sh` depends on;
@@ -97,7 +98,7 @@ Use this to ship changes to the app itself without waiting for an upstream relea
      --app-repo https://github.com/bhaggs/ha-remoteterm-app \
      --ha-changelog remoteterm/CHANGELOG.md
    ```
-   Leave out `--upstream`; that is what makes it an app-only revision. The script stops if `[Unreleased]` is empty.
+   Leave out `--upstream`; that is what makes it an app-only revision. The script stops if there is no `[Unreleased]` section with entries.
 4. Set `version: "3.26.8.1"` in `remoteterm/config.yaml`.
 5. Open a PR titled e.g. `release: 3.26.8.1` and merge it.
 
@@ -138,7 +139,7 @@ The Dev app is for trying upstream `main` and riskier changes to the app. It has
 ## Checklist before merging a production release
 
 - [ ] `config.yaml` version is `X.Y.Z` (upstream) or `X.Y.Z.N` (app-only), and higher than the current release.
-- [ ] The root `CHANGELOG.md` has a `## [<version>] - <date>` section, an empty `## [Unreleased]`, and updated comparison links.
+- [ ] The root `CHANGELOG.md` has a `## [<version>] - <date>` section, no `## [Unreleased]` heading, and updated comparison links.
 - [ ] `remoteterm/CHANGELOG.md` is regenerated (`render_ha_changelog.py … --check` passes).
 - [ ] For an upstream bump, the upstream image tag exists (`docker buildx imagetools inspect ghcr.io/statico/remoteterm-meshcore:<X.Y.Z>`).
 - [ ] `remoteterm/run.sh` and `remoteterm-dev/run.sh` match, unless a change is deliberately being tried in Dev first.

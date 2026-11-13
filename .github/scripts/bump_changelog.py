@@ -13,13 +13,14 @@ App-only revision (run by hand, see .claude/skills/release/SKILL.md):
         --ha-changelog remoteterm/CHANGELOG.md
 
 - Moves everything under "## [Unreleased]" into a new "## [VERSION] - DATE"
-  section and leaves [Unreleased] empty.
+  section and removes the [Unreleased] heading. The heading only exists while
+  there are committed changes waiting for a release; it may be absent.
 - With --upstream, adds a "Track upstream ..." bullet as the first entry under
   "### Changed" (creating that subsection if needed).
 - Without --upstream (app-only revision), refuses to run if [Unreleased] is
   empty, since there would be nothing to release.
 - Orders subsections as Keep a Changelog lists them.
-- Updates the [Unreleased] compare link and adds one for the new version.
+- Adds a compare link for the new version and drops any [Unreleased] link.
 - With --ha-changelog, regenerates the Home Assistant copy of the changelog
   (see render_ha_changelog.py).
 """
@@ -45,14 +46,19 @@ def main() -> None:
 
     text = Path(args.changelog).read_text()
     head, sep, rest = text.partition("## [Unreleased]\n")
-    if not sep:
-        sys.exit("CHANGELOG has no '## [Unreleased]' heading")
+    if sep:
+        # Split the remainder into the unreleased body and everything after it.
+        match = re.search(r"^## \[", rest, flags=re.M)
+        unreleased = rest[: match.start()] if match else rest
+        after = rest[match.start():] if match else ""
+    else:
+        # No [Unreleased] section: nothing pending; insert above the newest version.
+        match = re.search(r"^## \[", text, flags=re.M)
+        head = text[: match.start()] if match else text
+        after = text[match.start():] if match else ""
+        unreleased = ""
 
-    # Split the remainder into the unreleased body, the older version sections
-    # and the trailing link reference definitions.
-    match = re.search(r"^## \[", rest, flags=re.M)
-    unreleased = rest[: match.start()] if match else rest
-    after = rest[match.start():] if match else ""
+    # Split off the trailing link reference definitions.
     links_match = re.search(r"^\[[^\]]+\]: ", after, flags=re.M)
     older = after[: links_match.start()] if links_match else after
     links = after[links_match.start():] if links_match else ""
@@ -86,7 +92,7 @@ def main() -> None:
         )
         sections.setdefault("Changed", []).insert(0, track_line)
     elif not sections and not preamble_text:
-        sys.exit("[Unreleased] is empty: add entries for the app-only changes before releasing them")
+        sys.exit("Nothing to release: add a '## [Unreleased]' section with entries for the app-only changes first")
 
     ordered = [c for c in CATEGORY_ORDER if c in sections] + [
         c for c in sections if c not in CATEGORY_ORDER
@@ -103,9 +109,9 @@ def main() -> None:
         if prev_version
         else f"[{version}]: {app_repo}/releases/tag/v{version}"
     )
-    link_lines = [f"[Unreleased]: {app_repo}/compare/v{version}...HEAD", new_link, *link_lines]
+    link_lines = [new_link, *link_lines]
 
-    out = f"{head}## [Unreleased]\n\n{new_section}{older.rstrip()}\n\n" + "\n".join(link_lines) + "\n"
+    out = f"{head.rstrip()}\n\n{new_section}{older.rstrip()}\n\n" + "\n".join(link_lines) + "\n"
     Path(args.changelog).write_text(out)
 
     if args.ha_changelog:

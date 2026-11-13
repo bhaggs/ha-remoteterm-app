@@ -6,8 +6,6 @@ Version numbers match the upstream RemoteTerm for MeshCore release that the app 
 A fourth number (e.g. `3.26.8.1`) marks a release with changes to this app only, on the same upstream release.
 For changes to RemoteTerm itself, follow the upstream release linked in each entry.
 
-## [Unreleased]
-
 ## [3.26.8] - 2026-11-12
 
 **Before updating:** this version upgrades the RemoteTerm database, and the upgrade can't be undone. If you might want to roll back, take a Home Assistant backup of this app first (**Settings → System → Backups**).
@@ -144,7 +142,6 @@ For changes to RemoteTerm itself, follow the upstream release linked in each ent
 - SQLite database persisted to `/data/meshcore.db`.
 - Serial, TCP, and BLE connection modes supported.
 
-[Unreleased]: https://github.com/bhaggs/ha-remoteterm-app/compare/v3.26.8...HEAD
 [3.26.8]: https://github.com/bhaggs/ha-remoteterm-app/compare/v3.17.1...v3.26.8
 [3.17.1]: https://github.com/bhaggs/ha-remoteterm-app/compare/v3.16.2...v3.17.1
 [3.16.2]: https://github.com/bhaggs/ha-remoteterm-app/compare/v3.16.0...v3.16.2
