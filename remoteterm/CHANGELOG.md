@@ -29,6 +29,7 @@ For changes to RemoteTerm itself, follow the upstream release linked in each ent
 - Stopping the app no longer shows it as "error" in Home Assistant. The app shut down cleanly, but the start-up script exited with code 143 instead of the app's own exit code.
 - The app no longer downloads upstream's development tools (about 17 MB) on every start, so it starts faster and doesn't need internet access to start.
 - Stopping the app during its first minute now shuts RemoteTerm down cleanly too, and a crash during start-up is reported immediately instead of after 60 seconds.
+- On iPhone, the empty band between the Home Assistant header and the RemoteTerm header is gone. RemoteTerm's padding for the iPhone status bar was also applied inside Home Assistant, which already accounts for it. Opening RemoteTerm directly or as an installed web app is unchanged.
 
 ## [3.17.1] - 2026-08-04
 
