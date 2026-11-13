@@ -134,6 +134,7 @@ The Dev app is for trying upstream `main` and riskier changes to the app. It has
 
 ## Troubleshooting
 
+- **No upstream-update PRs for a while:** GitHub disables scheduled workflows after 60 days without repository activity. Check with `gh workflow list --all`; a state of `disabled_inactivity` on "Check upstream and update version" means it stopped. Re-enable it with `gh workflow enable update-upstream.yml`, then run it once with `gh workflow run update-upstream.yml`. This happened on 2026-10-11, 60 days after the last commit.
 - **Pushed a fix but HA offers no update:** the version wasn't bumped, so the build was skipped (look for the notice in the workflow run). Do an app-only release.
 - **`prepare` fails with "must be X.Y.Z or X.Y.Z.N":** `config.yaml` has some other format, e.g. `3.26.8-1`.
 - **`prepare` fails with "has no '## [<version>]' section":** the version was bumped without releasing the changelog. Run `bump_changelog.py`.
