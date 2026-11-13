@@ -11,11 +11,67 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  UPSTREAM_REPO: https://github.com/statico/remoteterm-meshcore
   IMAGE_NAME: ${{ github.repository }}/remoteterm-app
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  # Works out what to build, and refuses to overwrite a version that has
+  # already been released. See .claude/skills/release/SKILL.md for the rules.
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      upstream: ${{ steps.version.outputs.upstream }}
+      released: ${{ steps.version.outputs.released }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve app and upstream versions
+        id: version
+        run: |
+          VERSION=$(grep '^version:' remoteterm/config.yaml | awk '{print $2}' | tr -d '"')
+
+          # X.Y.Z    = upstream release X.Y.Z
+          # X.Y.Z.N  = app-only revision N on top of upstream X.Y.Z
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?$'; then
+            echo "::error::config.yaml version '${VERSION}' must be X.Y.Z or X.Y.Z.N"
+            exit 1
+          fi
+          UPSTREAM=$(echo "$VERSION" | cut -d. -f1-3)
+
+          if git ls-remote --tags origin "refs/tags/v${VERSION}" | grep -q .; then
+            RELEASED=true
+          else
+            RELEASED=false
+          fi
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "upstream=${UPSTREAM}" >> "$GITHUB_OUTPUT"
+          echo "released=${RELEASED}" >> "$GITHUB_OUTPUT"
+          echo "App version ${VERSION}, upstream image ${UPSTREAM}, already released: ${RELEASED}"
+
+      - name: Require a CHANGELOG section for a new version
+        if: steps.version.outputs.released == 'false'
+        run: |
+          if ! grep -qF "## [${{ steps.version.outputs.version }}]" remoteterm/CHANGELOG.md; then
+            echo "::error::remoteterm/CHANGELOG.md has no '## [${{ steps.version.outputs.version }}]' section"
+            exit 1
+          fi
+
+      - name: Explain skipped build
+        if: steps.version.outputs.released == 'true' && github.event_name == 'push'
+        run: |
+          echo "::notice::v${{ steps.version.outputs.version }} is already released, so this push does not rebuild it. Bump the version (X.Y.Z.N for app-only changes) to ship these changes."
+
   build-and-push:
+    needs: prepare
+    # A push never overwrites a released image; a manual run may rebuild one.
+    if: needs.prepare.outputs.released == 'false' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -24,13 +80,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Read app version from config.yaml
-        id: version
-        run: |
-          VERSION=$(grep '^version:' remoteterm/config.yaml | awk '{print $2}' | tr -d '"')
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "Building version ${VERSION}"
 
       - name: Set up QEMU (for cross-platform builds)
         uses: docker/setup-qemu-action@v3
@@ -53,16 +102,21 @@ jobs:
           # amd64  → Intel/AMD machines, VMs
           # arm64  → Raspberry Pi 4/5, Odroid N2+, and RPi 3 running 64-bit HAOS
           platforms: linux/amd64,linux/arm64
+          # Pin the upstream image to the release this app version packages
+          # (the first three parts of the version).
+          build-args: |
+            REMOTETERM_VERSION=${{ needs.prepare.outputs.upstream }}
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.prepare.outputs.version }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           # Layer cache speeds up subsequent builds
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   release:
-    needs: build-and-push
+    needs: [prepare, build-and-push]
+    if: needs.prepare.outputs.released == 'false'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -71,53 +125,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Read app version from config.yaml
-        id: version
-        run: |
-          VERSION=$(grep '^version:' remoteterm/config.yaml | awk '{print $2}' | tr -d '"')
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-
-      - name: Check if release tag already exists
-        id: tag_check
-        run: |
-          if git ls-remote --tags origin "refs/tags/v${{ steps.version.outputs.version }}" | grep -q .; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Build release notes
-        if: steps.tag_check.outputs.exists == 'false'
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          PREV_TAG=$(git tag --sort=-v:refname | head -1 2>/dev/null || echo "")
+          VERSION="${{ needs.prepare.outputs.version }}"
+          UPSTREAM="${{ needs.prepare.outputs.upstream }}"
+          # Body of this version's section in the Keep a Changelog file:
+          # everything between "## [VERSION]" and the next "## [" heading.
+          NOTES=$(awk -v v="$VERSION" '
+            index($0, "## [" v "]") == 1 { found = 1; next }
+            found && /^## \[/ { exit }
+            found && /^\[[^]]+\]: / { exit }
+            found { print }
+          ' remoteterm/CHANGELOG.md | sed -e '/./,$!d')
 
-          APP_COMMITS=""
-          if [ -n "$PREV_TAG" ]; then
-            APP_COMMITS=$(git log "${PREV_TAG}..HEAD" --oneline --no-merges \
-              -- remoteterm/ .github/ README.md repository.yaml \
-              | grep -v "chore: bump to upstream" \
-              | sed 's/^[a-f0-9]\+ /- /' \
-              2>/dev/null || echo "")
+          if [ -z "$NOTES" ]; then
+            echo "::error::No '## [${VERSION}]' section found in remoteterm/CHANGELOG.md"
+            exit 1
           fi
 
           {
-            echo "Tracks upstream [RemoteTerm for MeshCore v${VERSION}](https://github.com/jkingsman/Remote-Terminal-for-MeshCore/releases/tag/${VERSION})."
+            echo "Packages upstream [RemoteTerm for MeshCore ${UPSTREAM}](${UPSTREAM_REPO}/releases/tag/${UPSTREAM})."
             echo ""
-            echo "See the [upstream changelog](https://github.com/jkingsman/Remote-Terminal-for-MeshCore/blob/main/CHANGELOG.md) for details on what changed in this release."
-            if [ -n "$APP_COMMITS" ]; then
-              echo ""
-              echo "## Home Assistant App changes"
-              echo ""
-              echo "$APP_COMMITS"
-            fi
+            echo "$NOTES"
           } > /tmp/release_notes.md
 
       - name: Create GitHub Release
-        if: steps.tag_check.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "v${{ steps.version.outputs.version }}"
-          name: "v${{ steps.version.outputs.version }}"
+          tag_name: "v${{ needs.prepare.outputs.version }}"
+          name: "v${{ needs.prepare.outputs.version }}"
           body_path: /tmp/release_notes.md
           generate_release_notes: false
