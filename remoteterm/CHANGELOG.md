@@ -6,6 +6,15 @@ Version numbers match the upstream RemoteTerm for MeshCore release that the app 
 A fourth number (e.g. `3.26.8.1`) marks a release with changes to this app only, on the same upstream release.
 For changes to RemoteTerm itself, follow the upstream release linked in each entry.
 
+## 3.26.9
+
+_Released 2026-11-12_
+
+### Changed
+
+- Track upstream RemoteTerm for MeshCore [3.26.9](https://github.com/statico/remoteterm-meshcore/releases/tag/3.26.9). See the [upstream changelog](https://github.com/statico/remoteterm-meshcore/blob/main/CHANGELOG.md) for details.
+- The iPhone header fix from 3.26.8 now comes from upstream RemoteTerm itself, so this app no longer modifies RemoteTerm's web page. Nothing changes in how it looks.
+
 ## 3.26.8
 
 _Released 2026-11-12_
