@@ -143,12 +143,12 @@ The Dev app is for trying upstream `main` and riskier changes to the app. It has
 
 ## Moving changes between Dev and production
 
-`run.sh` and `ha-frame-safe-area.html` (an HA-specific fix added to upstream's `index.html` at build time) are meant to stay **identical** in both apps, and so is everything in the two Dockerfiles below the `FROM` line. The two `config.yaml` files differ only in `name`, `version`, `slug`, `description`, `stage`, `image` and `panel_title`.
+`run.sh` is meant to stay **identical** in both apps, and so is everything in the two Dockerfiles below the `FROM` line. The two `config.yaml` files differ only in `name`, `version`, `slug`, `description`, `stage`, `image` and `panel_title`.
 
 - **Risky runtime changes** (`run.sh`, start-up, signal handling, device access): change `remoteterm-dev/` first, run a Dev build, and test it on real hardware. Then copy the same change into `remoteterm/` with an `## Unreleased` entry, and ship it in an app-only or upstream release. Example: the SIGTERM fix went to Dev on 2026-05-22 and production on 2026-05-26.
 - **Simple option or permission changes in `config.yaml`**, and docs: change both apps in the same commit.
 - **Upstream changes:** Dev already runs upstream `main`, so it is where new upstream behaviour shows up first. Check it there before an upstream-update PR lands in production.
-- After moving a change across, confirm the copies still match: `diff remoteterm/run.sh remoteterm-dev/run.sh` and `diff remoteterm/ha-frame-safe-area.html remoteterm-dev/ha-frame-safe-area.html` should print nothing.
+- After moving a change across, confirm the copies still match: `diff remoteterm/run.sh remoteterm-dev/run.sh` should print nothing.
 
 ## Checklist before merging a production release
 

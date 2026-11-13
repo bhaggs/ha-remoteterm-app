@@ -13,6 +13,7 @@ _Released 2026-11-12_
 ### Changed
 
 - Track upstream RemoteTerm for MeshCore [3.26.9](https://github.com/statico/remoteterm-meshcore/releases/tag/3.26.9). See the [upstream changelog](https://github.com/statico/remoteterm-meshcore/blob/main/CHANGELOG.md) for details.
+- The iPhone header fix from 3.26.8 now comes from upstream RemoteTerm itself, so this app no longer modifies RemoteTerm's web page. Nothing changes in how it looks.
 
 ## 3.26.8
 
