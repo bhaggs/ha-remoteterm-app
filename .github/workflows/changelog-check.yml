@@ -1,0 +1,34 @@
+name: Check changelog copy
+
+# remoteterm/CHANGELOG.md is what Home Assistant shows in the update dialog.
+# It is generated from the root CHANGELOG.md; fail if someone edits one
+# without regenerating the other.
+
+on:
+  pull_request:
+    paths:
+      - CHANGELOG.md
+      - remoteterm/CHANGELOG.md
+      - .github/scripts/render_ha_changelog.py
+  push:
+    branches: [main]
+    paths:
+      - CHANGELOG.md
+      - remoteterm/CHANGELOG.md
+      - .github/scripts/render_ha_changelog.py
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check remoteterm/CHANGELOG.md is generated from CHANGELOG.md
+        run: python3 .github/scripts/render_ha_changelog.py CHANGELOG.md remoteterm/CHANGELOG.md --check

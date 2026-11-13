@@ -1,6 +1,6 @@
 ---
 name: release
-description: How this repo versions and releases its two Home Assistant apps — the production app (remoteterm/) and the experimental Dev app (remoteterm-dev/). Use when bumping a version, shipping an app-only fix, merging an upstream-update PR, editing remoteterm/CHANGELOG.md, writing or debugging release notes, triggering or troubleshooting the build/release workflows, or deciding whether a change goes to Dev or production first.
+description: How this repo versions and releases its two Home Assistant apps — the production app (remoteterm/) and the experimental Dev app (remoteterm-dev/). Use when bumping a version, shipping an app-only fix, merging an upstream-update PR, editing CHANGELOG.md, writing or debugging release notes, triggering or troubleshooting the build/release workflows, or deciding whether a change goes to Dev or production first.
 ---
 
 # Releasing the RemoteTerm Home Assistant apps
@@ -13,7 +13,7 @@ This repo publishes two Home Assistant apps built on the upstream RemoteTerm for
 | Built on upstream | Release tag matching the app version | `:edge` (upstream `main`) |
 | Version format | `X.Y.Z` or `X.Y.Z.N` | `YYYY.MM.DD.N`, stamped by CI |
 | Who sets the version | A person (or the upstream-update PR) | The workflow, on every build |
-| Changelog | `remoteterm/CHANGELOG.md` (Keep a Changelog) | None |
+| Changelog | Root `CHANGELOG.md`, with a generated copy in `remoteterm/CHANGELOG.md` for HA | None |
 | Git tag and GitHub Release | `vX.Y.Z[.N]`, notes from the changelog | None |
 | Image | `ghcr.io/bhaggs/ha-remoteterm-app/remoteterm-app` | `ghcr.io/bhaggs/ha-remoteterm-app/remoteterm-app-dev` |
 | Workflow | `.github/workflows/build-publish.yml` | `.github/workflows/build-publish-dev.yml` |
@@ -38,7 +38,16 @@ The build workflow rejects any other version format.
 
 ## Production changelog
 
-`remoteterm/CHANGELOG.md` follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/):
+There are two files:
+
+- **`CHANGELOG.md` at the repo root** is the one you edit. GitHub release notes come from it.
+- **`remoteterm/CHANGELOG.md` is generated** from it by `.github/scripts/render_ha_changelog.py`, and is what the Home Assistant update dialog shows. **Never edit it by hand.** After changing the root file, run `python3 .github/scripts/render_ha_changelog.py CHANGELOG.md remoteterm/CHANGELOG.md`. `bump_changelog.py --ha-changelog …` does this for you. The `changelog-check.yml` workflow and the release build fail if the copy is out of date.
+
+Why two files: the Supervisor reads `CHANGELOG.md` only from the app's own folder. HA trims it to the versions being installed only when each heading is exactly the bare version (`## 3.26.8`; the pattern is `^#* <version>\n`). The root file's `## [3.26.8] - 2026-11-12` headings would make HA show the whole file, so the copy uses `## 3.26.8` with `_Released <date>_` on the next line, and drops `[Unreleased]` and the link definitions.
+
+HA quirk: HA shows everything from the new version's heading down to the first heading that *starts with* the installed version. Going from `3.26.8` straight to `3.27.0`, it stops at `## 3.26.8.1`, so that revision's notes don't appear in the dialog. They're still in the GitHub releases. Nothing in the heading format can avoid this.
+
+Rules for the root file:
 
 - Every change to the app itself goes under `## [Unreleased]` **in the same PR as the change**, grouped under `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed` or `### Security`.
 - Write entries for HA users rather than developers: say what changes for them, not which file changed. Call out anything that needs action or can't be undone, such as database migrations, in **bold**.
@@ -65,7 +74,7 @@ To fix release notes, edit the changelog *before* the version merges, or edit th
 1. `update-upstream.yml` runs daily at 06:00 UTC, or can be started by hand. It compares the latest upstream release with the first three parts of `remoteterm/config.yaml`'s version.
 2. If upstream is newer, it opens an `update/remoteterm-<version>` PR that:
    - sets `version:` to the upstream version, dropping any `.N` revision;
-   - runs `bump_changelog.py --upstream …`, which moves `[Unreleased]` into the new version's section, puts the "Track upstream" line first under `### Changed`, and updates the links.
+   - runs `bump_changelog.py --upstream … --ha-changelog remoteterm/CHANGELOG.md`, which moves `[Unreleased]` into the new version's section, puts the "Track upstream" line first under `### Changed`, updates the links and regenerates the HA copy.
 3. Before merging, read the upstream release notes. Look for:
    - new `MESHCORE_*` settings worth exposing as app options (`config.yaml` `options`/`schema`, `run.sh`, `DOCS.md`);
    - changes to the `/api/health`, `/api/fanout` or `mqtt_ha` behaviour that `run.sh` depends on;
@@ -84,8 +93,9 @@ Use this to ship changes to the app itself without waiting for an upstream relea
 2. Pick the next revision: if the current version is `3.26.8`, use `3.26.8.1`; if it is `3.26.8.1`, use `3.26.8.2`.
 3. Release the changelog:
    ```bash
-   python3 .github/scripts/bump_changelog.py remoteterm/CHANGELOG.md 3.26.8.1 "$(TZ=America/Los_Angeles date +%Y-%m-%d)" \
-     --app-repo https://github.com/bhaggs/ha-remoteterm-app
+   python3 .github/scripts/bump_changelog.py CHANGELOG.md 3.26.8.1 "$(TZ=America/Los_Angeles date +%Y-%m-%d)" \
+     --app-repo https://github.com/bhaggs/ha-remoteterm-app \
+     --ha-changelog remoteterm/CHANGELOG.md
    ```
    Leave out `--upstream`; that is what makes it an app-only revision. The script stops if `[Unreleased]` is empty.
 4. Set `version: "3.26.8.1"` in `remoteterm/config.yaml`.
@@ -95,7 +105,7 @@ Use this to ship changes to the app itself without waiting for an upstream relea
 
 A push to `main` that touches `remoteterm/Dockerfile`, `run.sh` or `config.yaml` runs `build-publish.yml`:
 
-1. **prepare** reads the version and works out the upstream tag (first three parts). It checks whether tag `v<version>` already exists, and fails if `CHANGELOG.md` has no section for a new version.
+1. **prepare** reads the version and works out the upstream tag (first three parts). It checks whether tag `v<version>` already exists, and fails if the root `CHANGELOG.md` has no section for a new version, or if `remoteterm/CHANGELOG.md` is out of date.
 2. **build-and-push** builds amd64 and arm64 images `FROM ghcr.io/statico/remoteterm-meshcore:<upstream>` and pushes `:<version>` and `:latest`.
 3. **release** creates tag `v<version>` and the GitHub Release.
 
@@ -128,7 +138,8 @@ The Dev app is for trying upstream `main` and riskier changes to the app. It has
 ## Checklist before merging a production release
 
 - [ ] `config.yaml` version is `X.Y.Z` (upstream) or `X.Y.Z.N` (app-only), and higher than the current release.
-- [ ] `CHANGELOG.md` has a `## [<version>] - <date>` section, an empty `## [Unreleased]`, and updated comparison links.
+- [ ] The root `CHANGELOG.md` has a `## [<version>] - <date>` section, an empty `## [Unreleased]`, and updated comparison links.
+- [ ] `remoteterm/CHANGELOG.md` is regenerated (`render_ha_changelog.py … --check` passes).
 - [ ] For an upstream bump, the upstream image tag exists (`docker buildx imagetools inspect ghcr.io/statico/remoteterm-meshcore:<X.Y.Z>`).
 - [ ] `remoteterm/run.sh` and `remoteterm-dev/run.sh` match, unless a change is deliberately being tried in Dev first.
 - [ ] Anything users must act on, or that can't be undone, is in bold in the changelog and, if lasting, in `remoteterm/DOCS.md`.

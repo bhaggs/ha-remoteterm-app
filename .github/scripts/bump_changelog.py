@@ -2,13 +2,15 @@
 """Release the [Unreleased] section of a Keep a Changelog file as a new version.
 
 Upstream bump (run by .github/workflows/update-upstream.yml):
-    bump_changelog.py CHANGELOG 3.27.0 2026-11-20 \\
+    bump_changelog.py CHANGELOG.md 3.27.0 2026-11-20 \\
         --upstream https://github.com/statico/remoteterm-meshcore \\
-        --app-repo https://github.com/bhaggs/ha-remoteterm-app
+        --app-repo https://github.com/bhaggs/ha-remoteterm-app \\
+        --ha-changelog remoteterm/CHANGELOG.md
 
 App-only revision (run by hand, see .claude/skills/release/SKILL.md):
-    bump_changelog.py CHANGELOG 3.26.8.1 2026-11-20 \\
-        --app-repo https://github.com/bhaggs/ha-remoteterm-app
+    bump_changelog.py CHANGELOG.md 3.26.8.1 2026-11-20 \\
+        --app-repo https://github.com/bhaggs/ha-remoteterm-app \\
+        --ha-changelog remoteterm/CHANGELOG.md
 
 - Moves everything under "## [Unreleased]" into a new "## [VERSION] - DATE"
   section and leaves [Unreleased] empty.
@@ -18,6 +20,8 @@ App-only revision (run by hand, see .claude/skills/release/SKILL.md):
   empty, since there would be nothing to release.
 - Orders subsections as Keep a Changelog lists them.
 - Updates the [Unreleased] compare link and adds one for the new version.
+- With --ha-changelog, regenerates the Home Assistant copy of the changelog
+  (see render_ha_changelog.py).
 """
 
 import argparse
@@ -35,6 +39,7 @@ def main() -> None:
     parser.add_argument("date", help="release date, YYYY-MM-DD")
     parser.add_argument("--app-repo", required=True, help="https URL of this repository")
     parser.add_argument("--upstream", help="https URL of the upstream repo; omit for an app-only revision")
+    parser.add_argument("--ha-changelog", help="path of the Home Assistant copy to regenerate, e.g. remoteterm/CHANGELOG.md")
     args = parser.parse_args()
     version = args.version
 
@@ -102,6 +107,11 @@ def main() -> None:
 
     out = f"{head}## [Unreleased]\n\n{new_section}{older.rstrip()}\n\n" + "\n".join(link_lines) + "\n"
     Path(args.changelog).write_text(out)
+
+    if args.ha_changelog:
+        from render_ha_changelog import render  # same directory as this script
+
+        Path(args.ha_changelog).write_text(render(out))
 
 
 if __name__ == "__main__":
