@@ -57,8 +57,10 @@ def main() -> None:
     if prev_version == version:
         sys.exit(f"CHANGELOG already has a [{version}] section")
 
-    # Parse unreleased subsections: {category: [lines]}
+    # Parse unreleased subsections: {category: [lines]}. Text before the first
+    # subsection (e.g. a "**Before updating:**" paragraph) is kept as a preamble.
     sections: dict[str, list[str]] = {}
+    preamble: list[str] = []
     current = None
     for line in unreleased.splitlines():
         heading = re.match(r"^### (\w+)", line)
@@ -67,7 +69,10 @@ def main() -> None:
             sections.setdefault(current, [])
         elif current and line.strip():
             sections[current].append(line)
+        elif current is None:
+            preamble.append(line)
     sections = {k: v for k, v in sections.items() if v}
+    preamble_text = "\n".join(preamble).strip()
 
     if args.upstream:
         track_line = (
@@ -75,14 +80,15 @@ def main() -> None:
             f"See the [upstream changelog]({args.upstream}/blob/main/CHANGELOG.md) for details."
         )
         sections.setdefault("Changed", []).insert(0, track_line)
-    elif not sections:
+    elif not sections and not preamble_text:
         sys.exit("[Unreleased] is empty: add entries for the app-only changes before releasing them")
 
     ordered = [c for c in CATEGORY_ORDER if c in sections] + [
         c for c in sections if c not in CATEGORY_ORDER
     ]
     body = "".join(f"### {c}\n\n" + "\n".join(sections[c]) + "\n\n" for c in ordered)
-    new_section = f"## [{version}] - {args.date}\n\n{body}"
+    intro = f"{preamble_text}\n\n" if preamble_text else ""
+    new_section = f"## [{version}] - {args.date}\n\n{intro}{body}"
 
     # Rebuild link references.
     app_repo = args.app_repo

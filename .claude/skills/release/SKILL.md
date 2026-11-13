@@ -43,7 +43,8 @@ The build workflow rejects any other version format.
 - Every change to the app itself goes under `## [Unreleased]` **in the same PR as the change**, grouped under `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed` or `### Security`.
 - Write entries for HA users rather than developers: say what changes for them, not which file changed. Call out anything that needs action or can't be undone, such as database migrations, in **bold**.
 - Changes to upstream RemoteTerm itself are not listed. Each version's "Track upstream …" line links to the upstream release.
-- Released sections look like `## [3.26.8.1] - 2026-11-13`. Comparison links at the bottom of the file (`[3.26.8.1]: …/compare/v3.26.8...v3.26.8.1`) must be kept in sync. `.github/scripts/bump_changelog.py` does both.
+- Released sections look like `## [3.26.8.1] - 2026-11-13`. Dates are in the maintainer's local time (Pacific), not UTC.
+- Anything users must do *before* updating (backups, manual steps) goes in a bold **Before updating:** paragraph directly under the version heading, above the categories, so it leads the release notes. Comparison links at the bottom of the file (`[3.26.8.1]: …/compare/v3.26.8...v3.26.8.1`) must be kept in sync. `.github/scripts/bump_changelog.py` does both.
 - Changes that affect only the Dev app don't belong in this changelog.
 
 ## Production release notes
@@ -83,7 +84,7 @@ Use this to ship changes to the app itself without waiting for an upstream relea
 2. Pick the next revision: if the current version is `3.26.8`, use `3.26.8.1`; if it is `3.26.8.1`, use `3.26.8.2`.
 3. Release the changelog:
    ```bash
-   python3 .github/scripts/bump_changelog.py remoteterm/CHANGELOG.md 3.26.8.1 "$(date -u +%Y-%m-%d)" \
+   python3 .github/scripts/bump_changelog.py remoteterm/CHANGELOG.md 3.26.8.1 "$(TZ=America/Los_Angeles date +%Y-%m-%d)" \
      --app-repo https://github.com/bhaggs/ha-remoteterm-app
    ```
    Leave out `--upstream`; that is what makes it an app-only revision. The script stops if `[Unreleased]` is empty.

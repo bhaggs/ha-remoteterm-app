@@ -58,7 +58,7 @@ jobs:
           python3 .github/scripts/bump_changelog.py \
             remoteterm/CHANGELOG.md \
             "${NEW_VERSION}" \
-            "$(date -u +%Y-%m-%d)" \
+            "$(TZ=America/Los_Angeles date +%Y-%m-%d)" \
             --upstream "https://github.com/${UPSTREAM_REPO}" \
             --app-repo "https://github.com/${{ github.repository }}"
 
