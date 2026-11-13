@@ -22,3 +22,7 @@
 
 # Docker build artifacts
 *.tar
+
+# Python
+__pycache__/
+*.pyc
