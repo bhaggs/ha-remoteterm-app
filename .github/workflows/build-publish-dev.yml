@@ -7,7 +7,6 @@ on:
       - remoteterm-dev/Dockerfile
       - remoteterm-dev/run.sh
       - remoteterm-dev/config.yaml
-      - remoteterm-dev/MessageInput.tsx
   workflow_dispatch:
 
 env:
@@ -72,9 +71,10 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: remoteterm-dev/
-          # Builds from upstream main — takes longer than normal
-          # (~15-20 min) due to cloning and full frontend build under QEMU.
+          # Built on upstream's `edge` image (latest main). Always pull so a
+          # rebuild picks up the current edge instead of a cached base.
           platforms: linux/amd64,linux/arm64
+          pull: true
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
